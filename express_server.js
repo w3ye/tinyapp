@@ -40,22 +40,13 @@ app.get('/', (req, res) => {
   res.send('Hello');
 });
 
+// Generate Initial /url page
 app.get('/urls', (req, res) => {
   const templateVars = {urls: urlDatabase};
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
-});
-
-app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]};
-  res.render('urls_show', templateVars);
-});
-
+// Generating a urlKey that redirects to /urls/:shortURL
 app.post('/urls', (req, res) => {
   const key = generateRandomString();
   const redirectedURL = `/urls/${key}`;
@@ -63,9 +54,28 @@ app.post('/urls', (req, res) => {
   res.redirect(redirectedURL);
 });
 
+app.get('/urls/new', (req, res) => {
+  res.render('urls_new');
+});
+
+// Show the information of LongURL and ShortURL in page
+app.get('/urls/:shortURL', (req, res) => {
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL]};
+  res.render('urls_show', templateVars);
+});
+
+// When shortURL is clicked in url_show template. Redirect to the longURL
 app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
+});
+
+app.post('/urls/:shortURL/delete', (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect('/urls');
 });
 
 app.get('/urls.json', (req, res) => {
