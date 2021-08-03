@@ -29,7 +29,7 @@ const generateRandomString = () => {
 };
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
+  "b2xVn2y": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
@@ -50,8 +50,17 @@ app.get('/urls/new', (req, res) => {
 });
 
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
+  const templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL]};
   res.render('urls_show', templateVars);
+});
+
+app.post('/urls', (req, res) => {
+  const key = generateRandomString();
+  const redirectedURL = `/urls/${key}`;
+  urlDatabase[key] = req.body.longURL;
+  res.redirect(redirectedURL);
 });
 
 app.get('/urls.json', (req, res) => {
@@ -63,10 +72,6 @@ app.get('/hello', (req, res) => {
   res.render("hello_world", templateVars);
 });
 
-app.post('/urls', (req, res) => {
-  console.log(req.body);
-  res.send('ok');
-});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
