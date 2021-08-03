@@ -29,7 +29,7 @@ const generateRandomString = () => {
 };
 
 const urlDatabase = {
-  "b2xVn2y": "http://www.lighthouselabs.ca",
+  "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
@@ -61,6 +61,11 @@ app.post('/urls', (req, res) => {
   const redirectedURL = `/urls/${key}`;
   urlDatabase[key] = req.body.longURL;
   res.redirect(redirectedURL);
+});
+
+app.get('/u/:shortURL', (req, res) => {
+  const longURL = urlDatabase[req.params.shortURL];
+  res.redirect(longURL);
 });
 
 app.get('/urls.json', (req, res) => {
