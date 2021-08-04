@@ -19,6 +19,11 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk"
+  },
+  "hello": {
+    id: "hello",
+    email: "hello@hi.com",
+    password: '1234'
   }
 };
 
@@ -118,9 +123,24 @@ app.get('/login', (req, res) => {
   res.render('login', templateVars);
 });
 
+// return user object by looking email
+const getUser = (email) => {
+  for (let key in users) {
+    if (users[key].email === email) return users[key];
+  }
+  return undefined;
+};
+
 app.post('/login', (req, res) => {
-  res.cookie('username', req.body.username);
-  res.redirect('/urls');
+  const password = req.body.password;
+  const email = req.body.email;
+  const user = getUser(email);
+
+  if (password === user.password) {
+    res.cookie('user_id', user.id);
+    res.redirect('/urls');
+  }
+  res.redirect('/login');
 });
 
 app.post('/logout', (req, res) => {
@@ -139,7 +159,7 @@ app.get('/register', (req, res) => {
 const validateRegisterUser = (email, password) => {
   if (email === '' || password === '') return false;
   for (let key in users) {
-    if (users[key].email === email) return false;
+    if (getUser(email)) return false;
   }
   return true;
 };
