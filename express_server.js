@@ -132,16 +132,16 @@ const getUser = (email) => {
 };
 
 app.post('/login', (req, res) => {
-  const password = req.body.password ? req.body.password : '';
+  const password = req.body.password;
   const email = req.body.email;
   const user = getUser(email);
 
-  if (user === undefined) res.redirect('/login'); // if the user does not exist reload the page
+  if (user === undefined) res.sendStatus(403);  // if the user not found (403)
   if (password === user.password) {
     res.cookie('user_id', user.id);
     res.redirect('/urls');
   }
-  res.redirect('/login');
+  res.sendStatus(403); 				// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
@@ -171,7 +171,7 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   if (!validateRegisterUser(email, password)) {
     res.clearCookie('user_id');
-    return res.sendStatus(404);
+    return res.sendStatus(400);
   }
   users[userId] = {
     id: userId,
