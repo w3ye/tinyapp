@@ -132,10 +132,11 @@ const getUser = (email) => {
 };
 
 app.post('/login', (req, res) => {
-  const password = req.body.password;
+  const password = req.body.password ? req.body.password : '';
   const email = req.body.email;
   const user = getUser(email);
 
+  if (user === undefined) res.redirect('/login'); // if the user does not exist reload the page
   if (password === user.password) {
     res.cookie('user_id', user.id);
     res.redirect('/urls');
