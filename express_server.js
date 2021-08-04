@@ -129,7 +129,7 @@ app.get('/register', (req, res) => {
 });
 
 // returns false when email/password is empty or the email exists in users
-const validateUser = (email , password) => {
+const validateRegisterUser = (email, password) => {
   if (email === '' || password === '') return false;
   for (let key in users) {
     if (users[key].email === email) return false;
@@ -141,7 +141,7 @@ app.post('/register', (req, res) => {
   const userId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-  if (!validateUser(email, password)) {
+  if (!validateRegisterUser(email, password)) {
     res.clearCookie('user_id');
     return res.sendStatus(404);
   }
