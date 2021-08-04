@@ -128,15 +128,29 @@ app.get('/register', (req, res) => {
   res.render('user_register', templateVars);
 });
 
+// returns false when email/password is empty or the email exists in users
+const validateUser = (email , password) => {
+  if (email === '' || password === '') return false;
+  for (let key in users) {
+    if (users[key].email === email) return false;
+  }
+  return true;
+};
+
 app.post('/register', (req, res) => {
   const userId = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+  if (!validateUser(email, password)) {
+    res.clearCookie('user_id');
+    return res.sendStatus(404);
+  }
   users[userId] = {
     id: userId,
     email: req.body.email,
     password: req.body.password
   };
   res.cookie('user_id', userId);
-  console.log(users[userId]);
   res.redirect('/register');
 });
 
