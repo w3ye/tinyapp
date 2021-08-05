@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const { hashPassword, comparePassword } = require('./helper/hash');
 const app = express();
 const PORT = 8080;
 
@@ -186,15 +187,14 @@ app.post('/login', (req, res) => {
   const user = getUser(email);
 
   if (user === undefined) {
-    res.status(403);
-    res.send('Username or password Incorrect'); 	// if the user not found (403)
+    res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
   }
-  if (password === user.password) {
+
+  if (comparePassword(password, user.password)) {
     res.cookie('user_id', user.id);
     res.redirect('/urls');
   }
-  res.status(403);
-  res.send('Username or password Incorrect');	// if the user is found but password incorrect (403)
+  res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
@@ -228,8 +228,8 @@ app.post('/register', (req, res) => {
   }
   users[userId] = {
     id: userId,
-    email: req.body.email,
-    password: req.body.password
+    email: email,
+    password: hashPassword(password)
   };
   res.cookie('user_id', userId);
   res.redirect('/urls');
