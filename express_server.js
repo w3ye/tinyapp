@@ -5,7 +5,7 @@ const app = express();
 const PORT = 8080;
 
 const urlDatabase = {
-  b6UTxQ: {
+  b6UTxQy: {
     longURL: "https://www.tsn.ca",
     userID: "aJ48lW"
   },
@@ -101,6 +101,10 @@ app.post('/urls', (req, res) => {
   }
 });
 
+const urlsForUser = (id, userID) => {
+  return (urlDatabase[id].userID === userID) ? true : false;
+};
+
 app.get('/urls/new', (req, res) => {
   const templateVars = {
     user: users[req.cookies['user_id']] ? users[req.cookies['user_id']] : undefined
@@ -112,13 +116,19 @@ app.get('/urls/new', (req, res) => {
 
 // Show the information of LongURL and ShortURL in page
 app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    user: users[req.cookies['user_id']] ? users[req.cookies['user_id']] : undefined
-  };
-  
-  res.render('urls_show', templateVars);
+  if (req.cookies['user_id'] === undefined) {
+    res.redirect('/login');
+  }
+  if (urlsForUser(req.params.shortURL, req.cookies['user_id'])) {
+    const templateVars = {
+      shortURL: req.params.shortURL,
+      url: urlDatabase,
+      user: users[req.cookies['user_id']] ? users[req.cookies['user_id']] : undefined
+    };
+    res.render('urls_show', templateVars);
+  }
+  res.status(403);
+  res.send('Current user does not have ownership of this shortened url');
 });
 
 // When shortURL is clicked in url_show template. Redirect to the longURL
@@ -127,19 +137,28 @@ app.get('/u/:shortURL', (req, res) => {
     const longURL = urlDatabase[req.params.shortURL].longURL;
     res.redirect(longURL);
   }
-  res.status(400).send('Invalid short url');
+  res.status(400);
+  res.send('Invalid short url');
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  res.redirect('/urls');
+  if (urlsForUser(shortURL, req.cookies['user_id'])) {
+    delete urlDatabase[shortURL];
+    res.redirect('/urls');
+  }
+  res.status(403);
+  res.send(' Current user doesn\'t have ownership');
 });
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL].longURL = req.body.newLongURL;
-  res.redirect(`/urls/${shortURL}`);
+  if (urlsForUser(shortURL, req.cookies['user_id'])) {
+    urlDatabase[shortURL].longURL = req.body.newLongURL;
+    res.redirect(`/urls/${shortURL}`);
+  }
+  res.status(403);
+  res.send(' Current user doesn\'t have ownership');
 });
 
 app.get('/urls.json', (req, res) => {
@@ -167,13 +186,15 @@ app.post('/login', (req, res) => {
   const user = getUser(email);
 
   if (user === undefined) {
-    res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
+    res.status(403);
+    res.send('Username or password Incorrect'); 	// if the user not found (403)
   }
   if (password === user.password) {
     res.cookie('user_id', user.id);
     res.redirect('/urls');
   }
-  res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
+  res.status(403);
+  res.send('Username or password Incorrect');	// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
