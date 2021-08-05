@@ -4,9 +4,20 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW"
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW"
+  }
 };
 
 const users = {
@@ -20,8 +31,8 @@ const users = {
     email: "user2@example.com",
     password: "dishwasher-funk"
   },
-  "hello": {
-    id: "hello",
+  "aJ48lW": {
+    id: "aJ48lW",
     email: "hello@hi.com",
     password: '1234'
   }
