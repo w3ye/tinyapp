@@ -12,6 +12,10 @@ const urlDatabase = {
   i3BoGr: {
     longURL: "https://www.google.ca",
     userID: "aJ48lW"
+  },
+  '4CXZ8j': {
+    longURL: 'http://www.duck.com',
+    userID: 'xFq0Sv'
   }
 };
 
@@ -29,6 +33,11 @@ const users = {
   "aJ48lW": {
     id: "aJ48lW",
     email: "hello@hi.com",
+    password: '1234'
+  },
+  xFq0Sv: {
+    id: 'xFq0Sv',
+    email: 'cool@hi.com',
     password: '1234'
   }
 };
@@ -114,8 +123,11 @@ app.get('/urls/:shortURL', (req, res) => {
 
 // When shortURL is clicked in url_show template. Redirect to the longURL
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL]) {
+    const longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
+  }
+  res.status(400).send('Invalid short url');
 });
 
 app.post('/urls/:shortURL/delete', (req, res) => {
