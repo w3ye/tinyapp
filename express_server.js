@@ -4,11 +4,6 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
 
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
-
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -84,9 +79,14 @@ app.get('/urls', (req, res) => {
 app.post('/urls', (req, res) => {
   const key = generateRandomString();
   const redirectedURL = `/urls/${key}`;
-  urlDatabase[key] = req.body.longURL;
-  if (req.cookies['user_id']) res.redirect(redirectedURL);
-  else {
+  console.log(req.body.longURL);
+  if (req.cookies['user_id']) {
+    urlDatabase[key] = {
+      longURL: req.body.longURL,
+      userID: req.cookies['user_id']
+    };
+    res.redirect(redirectedURL);
+  } else {
     res.sendStatus(400);
     res.send('You are not logged in');
   }
@@ -105,7 +105,7 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
     user: users[req.cookies['user_id']] ? users[req.cookies['user_id']] : undefined
   };
   
@@ -114,7 +114,7 @@ app.get('/urls/:shortURL', (req, res) => {
 
 // When shortURL is clicked in url_show template. Redirect to the longURL
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
@@ -126,7 +126,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  urlDatabase[shortURL] = req.body.newLongURL;
+  urlDatabase[shortURL].longURL = req.body.newLongURL;
   res.redirect(`/urls/${shortURL}`);
 });
 
