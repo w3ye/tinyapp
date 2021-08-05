@@ -74,14 +74,20 @@ app.post('/urls', (req, res) => {
   const key = generateRandomString();
   const redirectedURL = `/urls/${key}`;
   urlDatabase[key] = req.body.longURL;
-  res.redirect(redirectedURL);
+  if (req.cookies['user_id']) res.redirect(redirectedURL);
+  else {
+    res.sendStatus(400);
+    res.send('You are not logged in');
+  }
 });
 
 app.get('/urls/new', (req, res) => {
   const templateVars = {
     user: users[req.cookies['user_id']] ? users[req.cookies['user_id']] : undefined
   };
-  res.render('urls_new', templateVars);
+
+  if (req.cookies['user_id'] !== undefined) res.render('urls_new', templateVars);
+  res.redirect('/login');
 });
 
 // Show the information of LongURL and ShortURL in page
@@ -91,6 +97,7 @@ app.get('/urls/:shortURL', (req, res) => {
     longURL: urlDatabase[req.params.shortURL],
     user: users[req.cookies['user_id']] ? users[req.cookies['user_id']] : undefined
   };
+  
   res.render('urls_show', templateVars);
 });
 
@@ -136,12 +143,14 @@ app.post('/login', (req, res) => {
   const email = req.body.email;
   const user = getUser(email);
 
-  if (user === undefined) res.sendStatus(403);  // if the user not found (403)
+  if (user === undefined) {
+    res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
+  }
   if (password === user.password) {
     res.cookie('user_id', user.id);
     res.redirect('/urls');
   }
-  res.sendStatus(403); 				// if the user is found but password incorrect (403)
+  res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
@@ -171,7 +180,7 @@ app.post('/register', (req, res) => {
   const password = req.body.password;
   if (!validateRegisterUser(email, password)) {
     res.clearCookie('user_id');
-    return res.sendStatus(400);
+    return res.status(400).send('Email used');
   }
   users[userId] = {
     id: userId,
@@ -179,7 +188,7 @@ app.post('/register', (req, res) => {
     password: req.body.password
   };
   res.cookie('user_id', userId);
-  res.redirect('/register');
+  res.redirect('/urls');
 });
 
 app.get('/hello', (req, res) => {
