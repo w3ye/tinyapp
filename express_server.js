@@ -2,6 +2,11 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const { hashPassword, comparePassword } = require('./helper/hash');
+const {
+  generateRandomString,
+  getUserByEmail,
+  urlsForUser
+} = require('./helper/helper');
 const app = express();
 const PORT = 8080;
 
@@ -41,31 +46,6 @@ const users = {
     email: 'cool@hi.com',
     password: '1234'
   }
-};
-
-// generate 6 alphanumeric values
-const generateRandomString = () => {
-  let ret = "";
-
-  for (let i = 0; i < 6; i++) {
-    const randomPick = Math.floor(Math.random() * 3);
-    switch (randomPick) {
-    // Uppercase
-    case 0:
-      // Uppercase ascii 65 - 90 inclusive
-      ret += String.fromCharCode(Math.floor(Math.random() * (90 - 65 + 1)) + 65);
-      break;
-    case 1:
-      // Lowercase ascii 97 - 122 inclusive
-      ret += String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1)) + 97);
-      break;
-    case 2:
-      // 0 - 9
-      ret += Math.floor(Math.random() * 10);
-      break;
-    }
-  }
-  return ret;
 };
 
 // Middlewares
