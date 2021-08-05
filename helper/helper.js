@@ -45,7 +45,7 @@ const getUserByEmail = (email, database) => {
  * @param {object} database urlDatabase
  * @returns {object} url object, null if the object is empty
  */
-const urlsForUser = (id, database) => {
+const urlsUserCheck = (id, database) => {
   let ret = {};
   for (let key in database) {
     if (database[key].userID === id) {
@@ -58,5 +58,5 @@ const urlsForUser = (id, database) => {
 module.exports = {
   generateRandomString,
   getUserByEmail,
-  urlsForUser
+  urlsUserCheck
 };

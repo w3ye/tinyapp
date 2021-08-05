@@ -5,7 +5,6 @@ const { hashPassword, comparePassword } = require('./helper/hash');
 const {
   generateRandomString,
   getUserByEmail,
-  urlsForUser
 } = require('./helper/helper');
 const app = express();
 const PORT = 8080;
@@ -86,10 +85,6 @@ app.post('/urls', (req, res) => {
   }
 });
 
-const urlsForUser = (id, userID) => {
-  return (urlDatabase[id].userID === userID) ? true : false;
-};
-
 app.get('/urls/new', (req, res) => {
   const templateVars = {
     user: users[req.session['user_id']] ? users[req.session['user_id']] : undefined
@@ -101,10 +96,19 @@ app.get('/urls/new', (req, res) => {
 
 // Show the information of LongURL and ShortURL in page
 app.get('/urls/:shortURL', (req, res) => {
+
+  // if the short url does not exists or doesn't belong
+  if (! urlDatabase[req.body.shortURL]) return res.status(404).send('This url doesn\'t exist');
+
+  const urlUserID = urlDatabase[req.body.shortURL].userID;
+
+  // if the user is not logged in
   if (req.session['user_id'] === undefined) {
     res.redirect('/login');
   }
-  if (urlsForUser(req.params.shortURL, req.session['user_id'])) {
+  
+  // if the url belongs to the current user
+  if (urlUserID === req.session['user_id']) {
     const templateVars = {
       shortURL: req.params.shortURL,
       url: urlDatabase,
@@ -112,8 +116,6 @@ app.get('/urls/:shortURL', (req, res) => {
     };
     res.render('urls_show', templateVars);
   }
-  res.status(403);
-  res.send('Current user does not have ownership of this shortened url');
 });
 
 // When shortURL is clicked in url_show template. Redirect to the longURL
@@ -128,7 +130,7 @@ app.get('/u/:shortURL', (req, res) => {
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlsForUser(shortURL, req.session['user_id'])) {
+  if (urlDatabase[req.body.shortURL].userID === req.session['user_id']) {
     delete urlDatabase[shortURL];
     res.redirect('/urls');
   }
@@ -138,7 +140,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlsForUser(shortURL, req.session['user_id'])) {
+  if (urlDatabase[req.body.shortURL].userID === req.session['user_id']) {
     urlDatabase[shortURL].longURL = req.body.newLongURL;
     res.redirect(`/urls/${shortURL}`);
   }
@@ -157,28 +159,21 @@ app.get('/login', (req, res) => {
   res.render('login', templateVars);
 });
 
-// return user object by looking email
-const getUser = (email) => {
-  for (let key in users) {
-    if (users[key].email === email) return users[key];
-  }
-  return undefined;
-};
-
 app.post('/login', (req, res) => {
   const password = req.body.password;
   const email = req.body.email;
-  const user = getUser(email);
+  const user = getUserByEmail(email, users);
 
-  if (user === undefined) {
-    res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
+  // If user incorrect or user not found
+  if (!user || user === undefined) {
+    res.status(400).send('Username or password Incorrect'); 	// if the user not found (403)
   }
 
   if (comparePassword(password, user.password)) {
     req.session['user_id'] = user.id;
     res.redirect('/urls');
   }
-  res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
+  res.status(400).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
@@ -197,7 +192,7 @@ app.get('/register', (req, res) => {
 const validateRegisterUser = (email, password) => {
   if (email === '' || password === '') return false;
   for (let key in users) {
-    if (getUser(email)) return false;
+    if (getUserByEmail(email, users)) return false;
   }
   return true;
 };
