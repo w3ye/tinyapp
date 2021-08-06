@@ -58,9 +58,9 @@ describe('getUserByEmail', () => {
     const user = getUserByEmail('user@example.com', testUsers);
     assert.deepEqual(user, testUsers['userRandomID']);
   });
-  it('Should return null if no user have this email', () => {
+  it('Should return undefined if no user have this email', () => {
     const user = getUserByEmail('user3@example.com', testUsers);
-    assert.deepEqual(user, null);
+    assert.deepEqual(user, undefined);
   });
 });
 

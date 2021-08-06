@@ -150,19 +150,16 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  const password = req.body.password;
   const email = req.body.email;
   const user = getUserByEmail(email, users);
 
+  // if user doesn't exist
   if (user === undefined) {
     res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
-  }
-
-  if (comparePassword(password, user.password)) {
+  } else if (comparePassword(req.body.password, user.password)) {
     req.session['user_id'] = user.id;
     res.redirect('/urls');
-  }
-  res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
+  } else res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
