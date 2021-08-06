@@ -2,10 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const { hashPassword, comparePassword } = require('./helper/hash');
-const {
-  generateRandomString,
-  getUserByEmail,
-} = require('./helper/helper');
+const { getUserByEmail, generateRandomString } = require('./helper/helper');
 const app = express();
 const PORT = 8080;
 
@@ -72,7 +69,6 @@ app.get('/urls', (req, res) => {
 app.post('/urls', (req, res) => {
   const key = generateRandomString();
   const redirectedURL = `/urls/${key}`;
-  console.log(req.body.longURL);
   if (req.session['user_id']) {
     urlDatabase[key] = {
       longURL: req.body.longURL,
@@ -90,32 +86,24 @@ app.get('/urls/new', (req, res) => {
     user: users[req.session['user_id']] ? users[req.session['user_id']] : undefined
   };
 
-  if (req.session['user_id'] !== undefined) res.render('urls_new', templateVars);
+  if (req.session['user_id'] !== undefined) return res.render('urls_new', templateVars);
   res.redirect('/login');
 });
 
 // Show the information of LongURL and ShortURL in page
 app.get('/urls/:shortURL', (req, res) => {
-
-  // if the short url does not exists or doesn't belong
-  if (! urlDatabase[req.body.shortURL]) return res.status(404).send('This url doesn\'t exist');
-
-  const urlUserID = urlDatabase[req.body.shortURL].userID;
-
-  // if the user is not logged in
+  // if the user is not loged in jump to the login
   if (req.session['user_id'] === undefined) {
     res.redirect('/login');
   }
-  
-  // if the url belongs to the current user
-  if (urlUserID === req.session['user_id']) {
+  if (urlDatabase[req.params.shortURL].userID === req.session['user_id']) {
     const templateVars = {
       shortURL: req.params.shortURL,
       url: urlDatabase,
-      user: users[req.session['user_id']] ? users[req.session['user_id']] : undefined
+      user: users[req.session['user_id']]
     };
     res.render('urls_show', templateVars);
-  }
+  } else res.status(403).send('Current user does not have ownership of this shortened url');
 });
 
 // When shortURL is clicked in url_show template. Redirect to the longURL
@@ -130,22 +118,19 @@ app.get('/u/:shortURL', (req, res) => {
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlDatabase[req.body.shortURL].userID === req.session['user_id']) {
+  // if the url belongs the the user
+  if (urlDatabase[req.params.shortURL].userID === req.session['user_id']) {
     delete urlDatabase[shortURL];
     res.redirect('/urls');
-  }
-  res.status(403);
-  res.send(' Current user doesn\'t have ownership');
+  } else res.status(403).send(' Current user doesn\'t have ownership');
 });
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlDatabase[req.body.shortURL].userID === req.session['user_id']) {
+  if (urlDatabase[req.params.shortURL].userID === req.session['user_id']) {
     urlDatabase[shortURL].longURL = req.body.newLongURL;
     res.redirect(`/urls/${shortURL}`);
-  }
-  res.status(403);
-  res.send(' Current user doesn\'t have ownership');
+  } else res.status(403).send(' Current user doesn\'t have ownership');
 });
 
 app.get('/urls.json', (req, res) => {
@@ -160,20 +145,16 @@ app.get('/login', (req, res) => {
 });
 
 app.post('/login', (req, res) => {
-  const password = req.body.password;
   const email = req.body.email;
   const user = getUserByEmail(email, users);
 
-  // If user incorrect or user not found
-  if (!user || user === undefined) {
-    res.status(400).send('Username or password Incorrect'); 	// if the user not found (403)
-  }
-
-  if (comparePassword(password, user.password)) {
+  // if user doesn't exist
+  if (user === undefined) {
+    res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
+  } else if (comparePassword(req.body.password, user.password)) {
     req.session['user_id'] = user.id;
     res.redirect('/urls');
-  }
-  res.status(400).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
+  } else res.status(403).send('Username or password Incorrect');	// if the user is found but password incorrect (403)
 });
 
 app.post('/logout', (req, res) => {
@@ -192,7 +173,7 @@ app.get('/register', (req, res) => {
 const validateRegisterUser = (email, password) => {
   if (email === '' || password === '') return false;
   for (let key in users) {
-    if (getUserByEmail(email, users)) return false;
+    if (getUserByEmail(email,users)) return false;
   }
   return true;
 };
@@ -201,9 +182,10 @@ app.post('/register', (req, res) => {
   const userId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  // if the username exists
   if (!validateRegisterUser(email, password)) {
     req.session = null;
-    return res.status(400).send('Email used');
+    return res.status(400).send('Account unavailable, try a new email');
   }
   users[userId] = {
     id: userId,
