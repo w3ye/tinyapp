@@ -81,10 +81,6 @@ app.post('/urls', (req, res) => {
   }
 });
 
-const urlCheckUser = (id, userID) => {
-  return (urlDatabase[id].userID === userID) ? true : false;
-};
-
 app.get('/urls/new', (req, res) => {
   const templateVars = {
     user: users[req.session['user_id']] ? users[req.session['user_id']] : undefined
@@ -122,12 +118,11 @@ app.get('/u/:shortURL', (req, res) => {
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlCheckUser(shortURL, req.session['user_id'])) {
+  // if the url belongs the the user
+  if (urlDatabase[req.params.shortURL].userID === req.session['user_id']) {
     delete urlDatabase[shortURL];
     res.redirect('/urls');
-  }
-  res.status(403);
-  res.send(' Current user doesn\'t have ownership');
+  } else res.status(403).send(' Current user doesn\'t have ownership');
 });
 
 app.post('/urls/:shortURL', (req, res) => {
@@ -187,6 +182,7 @@ app.post('/register', (req, res) => {
   const userId = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  // if the username exists
   if (!validateRegisterUser(email, password)) {
     req.session = null;
     return res.status(400).send('Email used');
