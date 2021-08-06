@@ -53,7 +53,9 @@ app.use(cookieSession({
 }));
 
 app.get('/', (req, res) => {
-  res.send('Hello');
+  if (req.session['user_id']) {
+    res.redirect('/urls');
+  } else res.redirect('/login');
 });
 
 // Generate Initial /url page
@@ -129,10 +131,6 @@ app.post('/urls/:shortURL', (req, res) => {
     urlDatabase[shortURL].longURL = req.body.newLongURL;
     res.redirect(`/urls/${shortURL}`);
   } else res.status(403).send(' Current user doesn\'t have ownership');
-});
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
 });
 
 app.get('/login', (req, res) => {
