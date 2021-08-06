@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const { hashPassword, comparePassword } = require('./helper/hash');
+const { getUserByEmail, generateRandomString } = require('./helper/helper');
 const app = express();
 const PORT = 8080;
 
@@ -43,31 +44,6 @@ const users = {
   }
 };
 
-// generate 6 alphanumeric values
-const generateRandomString = () => {
-  let ret = "";
-
-  for (let i = 0; i < 6; i++) {
-    const randomPick = Math.floor(Math.random() * 3);
-    switch (randomPick) {
-    // Uppercase
-    case 0:
-      // Uppercase ascii 65 - 90 inclusive
-      ret += String.fromCharCode(Math.floor(Math.random() * (90 - 65 + 1)) + 65);
-      break;
-    case 1:
-      // Lowercase ascii 97 - 122 inclusive
-      ret += String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1)) + 97);
-      break;
-    case 2:
-      // 0 - 9
-      ret += Math.floor(Math.random() * 10);
-      break;
-    }
-  }
-  return ret;
-};
-
 // Middlewares
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
@@ -106,7 +82,7 @@ app.post('/urls', (req, res) => {
   }
 });
 
-const urlsForUser = (id, userID) => {
+const urlCheckUser = (id, userID) => {
   return (urlDatabase[id].userID === userID) ? true : false;
 };
 
@@ -115,7 +91,7 @@ app.get('/urls/new', (req, res) => {
     user: users[req.session['user_id']] ? users[req.session['user_id']] : undefined
   };
 
-  if (req.session['user_id'] !== undefined) res.render('urls_new', templateVars);
+  if (req.session['user_id'] !== undefined) return res.render('urls_new', templateVars);
   res.redirect('/login');
 });
 
@@ -124,7 +100,7 @@ app.get('/urls/:shortURL', (req, res) => {
   if (req.session['user_id'] === undefined) {
     res.redirect('/login');
   }
-  if (urlsForUser(req.params.shortURL, req.session['user_id'])) {
+  if (urlCheckUser(req.params.shortURL, req.session['user_id'])) {
     const templateVars = {
       shortURL: req.params.shortURL,
       url: urlDatabase,
@@ -148,7 +124,7 @@ app.get('/u/:shortURL', (req, res) => {
 
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlsForUser(shortURL, req.session['user_id'])) {
+  if (urlCheckUser(shortURL, req.session['user_id'])) {
     delete urlDatabase[shortURL];
     res.redirect('/urls');
   }
@@ -158,7 +134,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlsForUser(shortURL, req.session['user_id'])) {
+  if (urlCheckUser(shortURL, req.session['user_id'])) {
     urlDatabase[shortURL].longURL = req.body.newLongURL;
     res.redirect(`/urls/${shortURL}`);
   }
@@ -177,18 +153,10 @@ app.get('/login', (req, res) => {
   res.render('login', templateVars);
 });
 
-// return user object by looking email
-const getUser = (email) => {
-  for (let key in users) {
-    if (users[key].email === email) return users[key];
-  }
-  return undefined;
-};
-
 app.post('/login', (req, res) => {
   const password = req.body.password;
   const email = req.body.email;
-  const user = getUser(email);
+  const user = getUserByEmail(email, users);
 
   if (user === undefined) {
     res.status(403).send('Username or password Incorrect'); 	// if the user not found (403)
@@ -217,7 +185,7 @@ app.get('/register', (req, res) => {
 const validateRegisterUser = (email, password) => {
   if (email === '' || password === '') return false;
   for (let key in users) {
-    if (getUser(email)) return false;
+    if (getUserByEmail(email,users)) return false;
   }
   return true;
 };

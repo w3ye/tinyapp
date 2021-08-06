@@ -27,7 +27,36 @@ const urlsForUser = (id, database) => {
   return (Object.entries(ret).length !== 0) ? ret : null;
 };
 
+/**
+ * Generate a random 6 character alphanumeric
+ * @returns {string} alphanumeric
+ */
+const generateRandomString = () => {
+  let ret = "";
+
+  for (let i = 0; i < 6; i++) {
+    const randomPick = Math.floor(Math.random() * 3);
+    switch (randomPick) {
+    // Uppercase
+    case 0:
+      // Uppercase ascii 65 - 90 inclusive
+      ret += String.fromCharCode(Math.floor(Math.random() * (90 - 65 + 1)) + 65);
+      break;
+    case 1:
+      // Lowercase ascii 97 - 122 inclusive
+      ret += String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1)) + 97);
+      break;
+    case 2:
+      // 0 - 9
+      ret += Math.floor(Math.random() * 10);
+      break;
+    }
+  }
+  return ret;
+};
+
 module.exports = {
   getUserByEmail,
+  generateRandomString,
   urlsForUser
 };
