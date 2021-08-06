@@ -26,3 +26,8 @@ const urlsForUser = (id, database) => {
   }
   return (Object.entries(ret).length !== 0) ? ret : null;
 };
+
+module.exports = {
+  getUserByEmail,
+  urlsForUser
+};
