@@ -69,7 +69,6 @@ app.get('/urls', (req, res) => {
 app.post('/urls', (req, res) => {
   const key = generateRandomString();
   const redirectedURL = `/urls/${key}`;
-  console.log(req.body.longURL);
   if (req.session['user_id']) {
     urlDatabase[key] = {
       longURL: req.body.longURL,
@@ -97,19 +96,18 @@ app.get('/urls/new', (req, res) => {
 
 // Show the information of LongURL and ShortURL in page
 app.get('/urls/:shortURL', (req, res) => {
+  // if the user is not loged in jump to the login
   if (req.session['user_id'] === undefined) {
     res.redirect('/login');
   }
-  if (urlCheckUser(req.params.shortURL, req.session['user_id'])) {
+  if (urlDatabase[req.params.shortURL].userID === req.session['user_id']) {
     const templateVars = {
       shortURL: req.params.shortURL,
       url: urlDatabase,
-      user: users[req.session['user_id']] ? users[req.session['user_id']] : undefined
+      user: users[req.session['user_id']]
     };
     res.render('urls_show', templateVars);
-  }
-  res.status(403);
-  res.send('Current user does not have ownership of this shortened url');
+  } else res.status(403).send('Current user does not have ownership of this shortened url');
 });
 
 // When shortURL is clicked in url_show template. Redirect to the longURL
@@ -134,12 +132,10 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 
 app.post('/urls/:shortURL', (req, res) => {
   const shortURL = req.params.shortURL;
-  if (urlCheckUser(shortURL, req.session['user_id'])) {
+  if (urlDatabase[req.params.shortURL].userID === req.session['user_id']) {
     urlDatabase[shortURL].longURL = req.body.newLongURL;
     res.redirect(`/urls/${shortURL}`);
-  }
-  res.status(403);
-  res.send(' Current user doesn\'t have ownership');
+  } else res.status(403).send(' Current user doesn\'t have ownership');
 });
 
 app.get('/urls.json', (req, res) => {
